@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  # This is our Postgres Database service
+  postgres-db:
+    image: postgres:14-alpine
+    container_name: ellatech-postgres
+    # Environment variables for the database
+    environment:
+      POSTGRES_USER: admin     # Change this
+      POSTGRES_PASSWORD: admin # Change this
+      POSTGRES_DB: ellatech_db # Change this
+    ports:
+      - "5432:5432" # Maps your computer's port 5432 to the container's port
+    volumes:
+      - postgres-data:/var/lib/postgresql/data # This makes sure your data persists even if you stop/remove the container
+
+volumes:
+  postgres-data: # Defines the volume
