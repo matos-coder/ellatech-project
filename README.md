@@ -1,98 +1,124 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# NestJS Users & Products Service (Take‑home)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Small backend service implemented for the Ellatech take‑home assignment.  
+Stack: NestJS, TypeORM, PostgreSQL, Docker Compose. Includes DTO validation, TypeORM migrations, and basic transaction history for product adjustments.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## What this repo contains
+- API to manage users, products and product adjustment transactions
+- Docker Compose setup to run API + Postgres locally
+- TypeORM entities & migrations
+- Swagger API docs
+- Basic validation and HTTP status handling
 
-## Description
+## Quick start
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
-
+1. Clone
 ```bash
-$ npm install
+git clone https://github.com/<your-username>/<your-repo>.git
+cd <your-repo>
 ```
 
-## Compile and run the project
+2. Run with Docker Compose (Windows)
+```powershell
+docker compose up --build
+```
+- API: http://localhost:3000
+- Swagger: http://localhost:3000/api
 
+3. (Optional) Run migrations locally (inside container or host with env configured)
 ```bash
-# development
-$ npm run start
+# generate
+npm run migration:generate --name=<migration-name>
 
-# watch mode
-$ npm run start:dev
+# run
+npm run migration:run
 
-# production mode
-$ npm run start:prod
+# revert
+npm run migration:revert
 ```
 
-## Run tests
-
+4. Tests
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm run test          # unit
+npm run test:e2e      # e2e
+npm run test:cov      # coverage
 ```
 
-## Deployment
+## API — Required endpoints
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+1) Create user
+- POST /users
+- Body:
+```json
+{ "name": "Matias", "email": "matias@example.com" }
+```
+- Returns 201 with created user
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+2) Create product
+- POST /products
+- Body:
+```json
+{
+  "name": "Laptop",
+  "description": "High performance laptop",
+  "price": 45000,
+  "status": "active"
+}
+```
+- Returns 201 with created product
 
+3) Adjust product (price/status) — records a transaction
+- PUT /products/adjust
+- Body:
+```json
+{
+  "productId": "uuid-here",
+  "price": 48000,
+  "status": "active"
+}
+```
+- Creates a transaction record; returns 200 with updated product
+
+4) Get product status + transaction summary
+- GET /status/:productId
+- Returns current product data and basic transaction summary
+
+5) List transactions
+- GET /transactions
+- Returns transactions sorted by date (latest first)
+
+All endpoints use DTO validation (class-validator). Errors return appropriate HTTP codes and a structured JSON response.
+
+Example cURL:
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+curl -X POST http://localhost:3000/users \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Matias","email":"matias@test.com"}'
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## Data model (summary)
+- User: id (uuid), name, email, createdAt
+- Product: id (uuid), name, description, price, status, createdAt, updatedAt
+- Transaction: id (uuid), productId (FK), oldPrice, newPrice, oldStatus, newStatus, createdAt
 
-## Resources
+## Migrations
+TypeORM migrations are included and can be run with the scripts above. Generate new migrations when changing entities.
 
-Check out a few resources that may come in handy when working with NestJS:
+## Assumptions & trade-offs
+- Product status stored as string (active/inactive/out_of_stock).
+- Every product adjustment always creates a transaction entry.
+- No authentication/authorization (kept out to respect timebox).
+- No pagination on transactions (can be added).
+- Simpler error handling (HttpException & basic wrappers) to fit timebox.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## Deliverables
+- GitHub repository link (provide when submitting)
+- This README with run/test steps and basic API docs
+- Notes on assumptions / trade-offs (above)
 
-## Support
+## Discussion points (for interview)
+- Data model and constraints
+- Validation, error handling, and transaction safety (DB transactions)
+- Improvements with more time (auth, pagination, more robust error filters, enums & constraints, rate limits, extended tests)
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+If anything is unclear, update the README or reply to the assignment email with questions.

@@ -4,11 +4,13 @@ import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
+import { ProductModule } from './product/product.module';
+import { TransactionsModule } from './transactions/transactions.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true, // Makes config available everywhere
+      isGlobal: true,
     }),
 
     TypeOrmModule.forRootAsync({
@@ -22,7 +24,7 @@ import { UsersModule } from './users/users.module';
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
         
-        entities: [__dirname + '/../**/*.entity.{js,ts}'], // Find all .entity files
+        entities: [__dirname + '/../**/*.entity.js'],
         synchronize: false,
         
         // --- This is for migrations ---
@@ -32,6 +34,8 @@ import { UsersModule } from './users/users.module';
     }),
 
     UsersModule,
+    ProductModule,
+    TransactionsModule,
 
   ],
   controllers: [AppController],

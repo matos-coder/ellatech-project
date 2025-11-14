@@ -14,10 +14,10 @@ export class UsersService {
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     const existingUser = await this.userRepository.findOne({
-      where: { id: createUserDto.id },
+      where: { email: createUserDto.email },
     });
     if (existingUser) {
-      throw new ConflictException('User with this ID already exists');
+      throw new ConflictException('User with this email already exists');
     }
 
     const newUser = this.userRepository.create(createUserDto);
